@@ -18,7 +18,7 @@
       <h1>Video Annotation Web Tool</h1>
     </div>
     <div class="container">
-      <div class="row">
+      <div class="row" style="position: relative">
         <div class="col-md-6">
           <video
             autoplay
@@ -35,13 +35,31 @@
           </video>
         </div>
         <div class="col-md-6">
-          <video id="right_video" width="320" height="240" nocontrols>
+          <video
+            id="right_video"
+            width="320"
+            height="240"
+            style="filter: grayscale(100%)"
+            nocontrols
+          >
             <source src="movie.mp4" type="video/mp4" />
             <source src="movie.ogv" type="video/ogg" />
             Your browser does not support the video tag.
           </video>
+          <canvas
+            id="canvas"
+            width="320"
+            height="240"
+            style="
+              border: 1px solid #d3d3d3;
+              position: absolute;
+              top: 0px;
+              left: 15px;
+            "
+          ></canvas>
           <div>
             <input
+              id="slider"
               type="range"
               min="0"
               max="1000"
@@ -54,13 +72,5 @@
       </div>
     </div>
   </body>
-  <script>
-    $(document).ready(function () {
-      const leftVideo = document.querySelector("#right_video");
-      const rightVideo = document.querySelector("#right_video");
-      $("#slider").change(function (e) {
-        rightVideo.currentTime = (rightVideo.duration * e.target.value) / 1000;
-      });
-    });
-  </script>
+  <script src="index.js"></script>
 </html>
