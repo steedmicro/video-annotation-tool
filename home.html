@@ -12,12 +12,27 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://docs.opencv.org/3.4.0/opencv.js"></script>
   </head>
   <body>
     <div class="jumbotron text-center">
       <h1>Video Annotation Web Tool</h1>
     </div>
     <div class="container">
+      <div class="row mb-5">
+        <div class="col-md-9">
+          <input
+            class="form-control"
+            id="video_source"
+            type="text"
+            value="movie.mp4"
+          />
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-primary" id="btn_load">Load</button>
+          <button class="btn btn-danger" id="btn_save">Save</button>
+        </div>
+      </div>
       <div class="row" style="position: relative">
         <div class="col-md-6">
           <video
@@ -30,22 +45,25 @@
             loop
           >
             <source src="movie.mp4" type="video/mp4" />
-            <source src="movie.ogv" type="video/ogg" />
             Your browser does not support the video tag.
           </video>
         </div>
         <div class="col-md-3">
-          <video
-            id="right_video"
-            width="320"
-            height="240"
-            style="filter: grayscale(100%)"
-            nocontrols
-          >
+          <video id="right_video" width="320" height="240" nocontrols>
             <source src="movie.mp4" type="video/mp4" />
-            <source src="movie.ogv" type="video/ogg" />
             Your browser does not support the video tag.
           </video>
+          <canvas
+            id="videoCanvas"
+            width="320"
+            height="240"
+            style="
+              border: 1px solid #d3d3d3;
+              position: absolute;
+              top: 0px;
+              left: 15px;
+            "
+          ></canvas>
           <canvas
             id="canvas"
             width="320"
@@ -57,28 +75,30 @@
               left: 15px;
             "
           ></canvas>
+
           <div>
             <input
               id="slider"
               type="range"
               min="0"
-              max="1000"
+              max="99"
               value="0"
               id="slider"
               style="width: 320px"
             />
           </div>
           <div class="mt-5" style="width: 320px; position: relative">
-            <span> Brush Size : </span>
+            <span> Brush Size : <span id="brushRadius">16</span></span>
+            <span>px</span>
             <input
               id="brushRadiusSlider"
-              type="number"
-              style="width: 70px"
+              class="d-block"
+              type="range"
+              style="width: 180px; margin-top: 10px"
               value="16"
               min="5"
               max="40"
             />
-            <span>px</span>
             <canvas
               id="brushCanvas"
               width="100"

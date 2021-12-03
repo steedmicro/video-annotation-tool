@@ -1,21 +1,29 @@
-let MAX_DURATION = 100,
-  FRAMES_PER_SECOND = 10,
+const MAX_ALPHA = 255,
+  BRUSH_THRESHOLD = 20,
+  BRUSH_CANVAS_WIDTH = 100,
+  BRUSH_CANVAS_HEIGHT = 100,
+  TIMELINE_WIDTH = 10,
   VIDEO_WIDTH = 320,
   VIDEO_HEIGHT = 240,
-  videoAnnotationData = new Uint8ClampedArray(
+  MAX_DURATION = 100;
+let videoAnnotationData = new Uint8ClampedArray(
     VIDEO_WIDTH * VIDEO_HEIGHT * MAX_DURATION
   ),
   videoFrameIndex = 0,
   brushRadius = 16,
-  timeInterval = 10,
   isCanvasMousePressed = false,
   isShiftKeyPressed = false,
-  BRUSH_CANVAS_WIDTH = 100,
-  BRUSH_CANVAS_HEIGHT = 100,
   centerX,
-  centerY;
-const MAX_ALPHA = 120,
-  BRUSH_THRESHOLD = 20;
+  centerY,
+  videoSource = "movie.mp4",
+  leftVideo,
+  rightVideo;
+
+function initVideoAnnotationData() {
+  let i;
+  const l = videoAnnotationData.length;
+  for (i = 0; i < l; i++) videoAnnotationData[i] = MAX_ALPHA / 2;
+}
 function draw() {
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
@@ -33,9 +41,19 @@ function draw() {
   // Draw image data to the canvas
   ctx.putImageData(imageData, 0, 0);
   ctx.beginPath();
-  ctx.fillStyle = isShiftKeyPressed ? "#ffffff77" : "#ff000077";
+  ctx.fillStyle = isShiftKeyPressed ? "#ffffffaa" : "#ff0000aa";
   ctx.arc(centerX, centerY, brushRadius, 0, Math.PI * 2, true);
   ctx.fill();
+}
+function drawVideo() {
+  const canvas = document.getElementById("videoCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(rightVideo, 0, 0);
+  var src = cv.imread("videoCanvas");
+  cv.cvtColor(src, src, cv.COLOR_RGB2GRAY, 0);
+  cv.Canny(src, src, 50, 100, 3, false);
+  cv.imshow("videoCanvas", src);
+  src.delete();
 }
 function drawBrush() {
   const canvas = document.getElementById("brushCanvas");
@@ -54,13 +72,20 @@ function drawBrush() {
   );
   ctx.fill();
 }
+const download = (url, filename) => {
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename || "download";
+  anchor.click();
+};
 $(document).ready(function () {
-  const leftVideo = document.querySelector("#right_video");
-  const rightVideo = document.querySelector("#right_video");
+  leftVideo = document.querySelector("#left_video");
+  rightVideo = document.querySelector("#right_video");
   rightVideo.addEventListener("loadeddata", (e) => {
-    $("#slider").attr("max", MAX_DURATION - 1);
+    setTimeout(() => {
+      drawVideo();
+    }, 100);
   });
-  $("#canvas").focus();
   $("#canvas").mousedown(function () {
     isCanvasMousePressed = true;
   });
@@ -70,6 +95,20 @@ $(document).ready(function () {
   $(document).on("keyup keydown", function (e) {
     isShiftKeyPressed = e.shiftKey;
     draw();
+  });
+  $("#btn_load").click(function (e) {
+    videoSource = $("#video_source").val();
+    $("#left_video source").attr("src", videoSource);
+    leftVideo.load();
+    $("#right_video source").attr("src", videoSource);
+    rightVideo.load();
+    videoFrameIndex = 0;
+    $("#slider").val(0);
+    initVideoAnnotationData();
+    draw();
+  });
+  $("#btn_save").click(function (e) {
+    download(URL.createObjectURL(new Blob([videoAnnotationData])), "data.out");
   });
   $("#canvas").mousemove(function (e) {
     isShiftKeyPressed = e.shiftKey;
@@ -81,8 +120,8 @@ $(document).ready(function () {
 
     let x, y, t, d, sign, offset, offsetWithTime;
     for (
-      t = videoFrameIndex - timeInterval;
-      t <= videoFrameIndex + timeInterval;
+      t = videoFrameIndex - TIMELINE_WIDTH;
+      t <= videoFrameIndex + TIMELINE_WIDTH;
       t++
     ) {
       if (t < 0 || t >= MAX_DURATION) continue;
@@ -108,8 +147,8 @@ $(document).ready(function () {
               )
             );
           offsetWithTime =
-            (offset * (timeInterval - Math.abs(t - videoFrameIndex))) /
-            timeInterval;
+            (offset * (TIMELINE_WIDTH - Math.abs(t - videoFrameIndex))) /
+            TIMELINE_WIDTH;
           videoAnnotationData[
             t * VIDEO_WIDTH * VIDEO_HEIGHT + y * VIDEO_WIDTH + x
           ] = Math.max(Math.min(d + sign * offsetWithTime, MAX_ALPHA), 0);
@@ -119,6 +158,7 @@ $(document).ready(function () {
 
     draw();
   });
+  initVideoAnnotationData();
   draw();
   drawBrush();
   $("#slider").change(function (e) {
@@ -126,10 +166,13 @@ $(document).ready(function () {
     rightVideo.currentTime =
       (videoFrameIndex * rightVideo.duration) / MAX_DURATION;
     draw();
+    drawVideo();
   });
   $("#brushRadiusSlider").change(function (e) {
+    $("#brushRadius").html(e.target.value);
     brushRadius = parseInt(e.target.value);
     draw();
     drawBrush();
+    drawVideo();
   });
 });
