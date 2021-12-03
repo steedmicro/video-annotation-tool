@@ -20,7 +20,7 @@
     </div>
     <div class="container">
       <div class="row mb-5">
-        <div class="col-md-9">
+        <div class="col-md-6">
           <input
             class="form-control"
             id="video_source"
@@ -31,6 +31,22 @@
         <div class="col-md-3">
           <button class="btn btn-primary" id="btn_load">Load</button>
           <button class="btn btn-danger" id="btn_save">Save</button>
+        </div>
+        <div class="col-md-3">
+          <form action="index.php" method="post" enctype="multipart/form-data">
+            <input
+              class="d-inline"
+              type="file"
+              name="fileToUpload"
+              id="fileToUpload"
+            />
+            <input
+              class="btn btn-info d-inline"
+              type="submit"
+              value="Upload Video"
+              name="submit"
+            />
+          </form>
         </div>
       </div>
       <div class="row" style="position: relative">
