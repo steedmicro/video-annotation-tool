@@ -45,22 +45,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             value="<?php echo $video_source?>"
           />
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <button class="btn btn-primary" id="btn_load">Load</button>
           <button class="btn btn-danger" id="btn_save">Save</button>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <form action="index.php" method="post" enctype="multipart/form-data">
             <input
               class="d-inline"
               type="file"
               name="fileToUpload"
               id="fileToUpload"
+              style="width:60%;"
             />
             <input
               class="btn btn-info d-inline"
               type="submit"
-              value="Upload Video"
+              value="Upload"
+              style="width:30%;"
               name="submit"
             />
           </form>
