@@ -231,7 +231,7 @@ function draw() {
   ctx.arc(centerX, centerY, brushRadius, 0, Math.PI * 2, true);
   ctx.fill();
 }
-let cap, srcArray  = [], dstArray = [], isSrcDone = false, isLoaded = false;
+let cap, srcArray  = [], dstArray = [], isSrcDone = false, isPaused = false;
 function processMat(src, frameIndex) {
   const rows = src.rows, cols = src.cols, channels = src.channels();
   let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * frameIndex, k, p, data = src.data;
@@ -280,10 +280,12 @@ function processMat(src, frameIndex) {
   }
 }
 function drawLeftVideo() {
+  if(isPaused) return;
   if(!isSrcDone) {
     leftVideo.currentTime =
-        (leftVideoFrameIndex * rightVideo.duration) / MAX_DURATION;
+        (leftVideoFrameIndex * leftVideo.duration) / MAX_DURATION;
   }
+  console.log("working");
   let begin = Date.now(), src;
   const canvas = document.getElementById("left_video_canvas");
   const ctx = canvas.getContext("2d");
@@ -308,10 +310,6 @@ function drawLeftVideo() {
       }
     }
   }
-  /*
-  ctx.drawImage(leftVideo, 0, 0);
-  var src = cv.imread("left_video_canvas");
-  */
   
   if(!isSrcDone) {
     processMat(src, leftVideoFrameIndex);
@@ -364,13 +362,20 @@ const download = (url, filename) => {
   anchor.download = filename || "download";
   anchor.click();
 };
+const deleteArray = (arr) => {
+  let i;
+  const l = arr.length;
+  for(i = 0; i < l; i ++) {
+    if(arr[i])
+      arr[i].delete();
+  }
+}
 $(document).ready(function () {
   leftVideo = document.querySelector("#left_video");
   rightVideo = document.querySelector("#right_video");
   $("#slider").attr("max", MAX_DURATION - 1);
   leftVideo.addEventListener("loadeddata", (e) => {
-    if(isLoaded) return;
-    isLoaded = true;
+    isPaused = false;
     cap = new cv.VideoCapture(leftVideo);
     setTimeout(() => {
       drawLeftVideo();
@@ -400,6 +405,10 @@ $(document).ready(function () {
     rightVideo.load();
     leftVideoFrameIndex = 0;
     rightVideoFrameIndex = 0;
+    isSrcDone = false;
+    isPaused = true;
+    srcArray = [];
+    dstArray = [];
     $("#slider").val(0);
     initVideoAnnotationData();
     draw();
