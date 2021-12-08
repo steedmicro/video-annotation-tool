@@ -231,7 +231,7 @@ function draw() {
   ctx.arc(centerX, centerY, brushRadius, 0, Math.PI * 2, true);
   ctx.fill();
 }
-let src, cap, srcArray  = [], dstArray = [], isSrcDone = false;
+let cap, srcArray  = [], dstArray = [], isSrcDone = false, isLoaded = false;
 function processMat(src, frameIndex) {
   const rows = src.rows, cols = src.cols, channels = src.channels();
   let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * frameIndex, k, p, data = src.data;
@@ -284,7 +284,7 @@ function drawLeftVideo() {
     leftVideo.currentTime =
         (leftVideoFrameIndex * rightVideo.duration) / MAX_DURATION;
   }
-  let begin = Date.now();
+  let begin = Date.now(), src;
   const canvas = document.getElementById("left_video_canvas");
   const ctx = canvas.getContext("2d");
   if(!isSrcDone) {
@@ -369,6 +369,8 @@ $(document).ready(function () {
   rightVideo = document.querySelector("#right_video");
   $("#slider").attr("max", MAX_DURATION - 1);
   leftVideo.addEventListener("loadeddata", (e) => {
+    if(isLoaded) return;
+    isLoaded = true;
     cap = new cv.VideoCapture(leftVideo);
     setTimeout(() => {
       drawLeftVideo();
@@ -396,6 +398,7 @@ $(document).ready(function () {
     leftVideo.load();
     $("#right_video source").attr("src", videoSource);
     rightVideo.load();
+    leftVideoFrameIndex = 0;
     rightVideoFrameIndex = 0;
     $("#slider").val(0);
     initVideoAnnotationData();
