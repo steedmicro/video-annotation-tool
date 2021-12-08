@@ -9,10 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
         $video_source =  $actual_link.htmlspecialchars( basename( $_FILES["fileToUpload"]["name"])). "";
     } else {
-        $video_source = "movie.mp4";
+        $video_source = "movie_clip.mp4";
     }
 } else {
-    $video_source = "movie.mp4";
+    $video_source = "movie_clip.mp4";
 }
 ?>
 <!DOCTYPE html>
@@ -85,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height="240"
             style="display:none;"
             nocontrols
+            autoplay
           >
             <source src="<?php echo $video_source?>" type="video/mp4" />
             Your browser does not support the video tag.
@@ -184,7 +185,7 @@ const MAX_ALPHA = 255,
   TIMELINE_WIDTH = 40,
   VIDEO_WIDTH = 320,
   VIDEO_HEIGHT = 240,
-  MAX_DURATION = 400,
+  MAX_DURATION = 100,
   METHOD_SWAP = 0,
   METHOD_QUANTIZATION = 1,
   METHOD_SALT_AND_PEPPER_NOISE = 2,
@@ -199,7 +200,7 @@ let videoAnnotationData = new Uint8ClampedArray(
   isShiftKeyPressed = false,
   centerX,
   centerY,
-  videoSource = "movie.mp4",
+  videoSource = "movie_clip.mp4",
   leftVideo,
   rightVideo,
   processMethod = METHOD_SWAP;
@@ -230,68 +231,105 @@ function draw() {
   ctx.arc(centerX, centerY, brushRadius, 0, Math.PI * 2, true);
   ctx.fill();
 }
+let src, cap, srcArray  = [], dstArray = [], isSrcDone = false;
+function processMat(src) {
+  const rows = src.rows, cols = src.cols, channels = src.channels();
+  let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * leftVideoFrameIndex, k, p, data = src.data;
+  if(processMethod === METHOD_SWAP) {
+    for(i = rows - 1; i >= 0; i --) {
+      for(j = cols - 1; j >= 0; j --) {
+        index = i * cols * channels + j * channels;
+        r = data[index];
+        g = data[index + 1];
+        b = data[index + 2];
+        d = videoAnnotationData[annotationDataIndex + i * cols + j];
+        if(d > 128) {
+          data[index] = g;
+          data[index + 1] = r;
+        }
+      }
+    }
+  } else if(processMethod === METHOD_QUANTIZATION) {
+    for(i = rows - 1; i >= 0; i --) {
+      for(j = cols - 1; j >= 0; j --) {
+        index = i * cols * channels + j * channels;
+        r = data[index];
+        g = data[index + 1];
+        b = data[index + 2];
+        d = videoAnnotationData[annotationDataIndex + i * cols + j];
+        k = 8 - Math.floor(d / 32);
+        data[index] = Math.floor(r / k) * k;
+        data[index + 1] = Math.floor(g / k) * k;
+        data[index + 2] = Math.floor(b / k) * k;
+      }
+    }
+  } else if(processMethod === METHOD_SALT_AND_PEPPER_NOISE) {
+    for(i = rows - 1; i >= 0; i --) {
+      for(j = cols - 1; j >= 0; j --) {
+        index = i * cols * channels + j * channels;
+        r = data[index];
+        g = data[index + 1];
+        b = data[index + 2];
+        d = videoAnnotationData[annotationDataIndex + i * cols + j];
+        p = 0.99 + Math.floor(d / 32) / 700.0;
+        data[index] = Math.random() < p ?  r : Math.floor(Math.random() * 256);
+        data[index + 1] = Math.random() < p ? g : Math.floor(Math.random() * 256);
+        data[index + 2] = Math.random() < p ? b : Math.floor(Math.random() * 256);
+      }
+    }
+  }
+}
 function drawLeftVideo() {
-  leftVideo.currentTime =
-      (leftVideoFrameIndex * rightVideo.duration) / MAX_DURATION;
-  setTimeout(() => {
-    const canvas = document.getElementById("left_video_canvas");
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(leftVideo, 0, 0);
-    var src = cv.imread("left_video_canvas");
-    const rows = src.rows, cols = src.cols, channels = src.channels();
-    let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * leftVideoFrameIndex, k, p, data = src.data;
-
-    if(processMethod === METHOD_SWAP) {
-      for(i = rows - 1; i >= 0; i --) {
-        for(j = cols - 1; j >= 0; j --) {
-          index = i * cols * channels + j * channels;
-          r = data[index];
-          g = data[index + 1];
-          b = data[index + 2];
-          d = videoAnnotationData[annotationDataIndex + i * cols + j];
-          if(d > 128) {
-            data[index] = g;
-            data[index + 1] = r;
-          }
+  if(!isSrcDone) {
+    leftVideo.currentTime =
+        (leftVideoFrameIndex * rightVideo.duration) / MAX_DURATION;
+  }
+  let begin = Date.now();
+  const canvas = document.getElementById("left_video_canvas");
+  const ctx = canvas.getContext("2d");
+  if(!isSrcDone) {
+    src = new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4);
+    cap.read(src);
+    srcArray.push(new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4));
+    srcArray[leftVideoFrameIndex] = src.clone();
+  } else {
+    if(leftVideoFrameIndex === 0) {
+      let index = 0;
+      for(index = 0; index < MAX_DURATION; index ++) {
+        src = srcArray[index].clone();
+        processMat(src);
+        if(dstArray[index] === undefined) {
+          dstArray.push(new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4));
+        } else {
+          dstArray[index].delete();
         }
-      }
-    } else if(processMethod === METHOD_QUANTIZATION) {
-      for(i = rows - 1; i >= 0; i --) {
-        for(j = cols - 1; j >= 0; j --) {
-          index = i * cols * channels + j * channels;
-          r = data[index];
-          g = data[index + 1];
-          b = data[index + 2];
-          d = videoAnnotationData[annotationDataIndex + i * cols + j];
-          k = 8 - Math.floor(d / 32);
-          data[index] = Math.floor(r / k) * k;
-          data[index + 1] = Math.floor(g / k) * k;
-          data[index + 2] = Math.floor(b / k) * k;
-        }
-      }
-    } else if(processMethod === METHOD_SALT_AND_PEPPER_NOISE) {
-      for(i = rows - 1; i >= 0; i --) {
-        for(j = cols - 1; j >= 0; j --) {
-          index = i * cols * channels + j * channels;
-          r = data[index];
-          g = data[index + 1];
-          b = data[index + 2];
-          d = videoAnnotationData[annotationDataIndex + i * cols + j];
-          p = 0.99 + Math.floor(d / 32) / 700.0;
-          data[index] = Math.random() < p ?  r : Math.floor(Math.random() * 256);
-          data[index + 1] = Math.random() < p ? g : Math.floor(Math.random() * 256);
-          data[index + 2] = Math.random() < p ? b : Math.floor(Math.random() * 256);
-        }
+        dstArray[index] = src.clone();
+        src.delete();
       }
     }
-    cv.imshow("left_video_canvas", src);
-    src.delete();
+  }
+  /*
+  ctx.drawImage(leftVideo, 0, 0);
+  var src = cv.imread("left_video_canvas");
+  */
+  
+  if(!isSrcDone) {
+    processMat(src);
+  } else {
+    src = dstArray[leftVideoFrameIndex].clone();
+  }
+  if(leftVideoFrameIndex === MAX_DURATION - 1) {
+    isSrcDone = true;
+  }
+  cv.imshow("left_video_canvas", src);
+  src.delete();
 
-    leftVideoFrameIndex ++;
-    if(leftVideoFrameIndex === MAX_DURATION) {
-      leftVideoFrameIndex = 0;
-    }
-  }, 100);
+  leftVideoFrameIndex ++;
+  if(leftVideoFrameIndex === MAX_DURATION) {
+    leftVideoFrameIndex = 0;
+  }
+  let delay = leftVideo.duration * 1000 / MAX_DURATION - (Date.now() - begin);
+  setTimeout(drawLeftVideo, delay);
 }
 function drawRightVideo() {
   const canvas = document.getElementById("right_video_canvas");
@@ -331,9 +369,10 @@ $(document).ready(function () {
   rightVideo = document.querySelector("#right_video");
   $("#slider").attr("max", MAX_DURATION - 1);
   leftVideo.addEventListener("loadeddata", (e) => {
-    setInterval(() => {
+    cap = new cv.VideoCapture(leftVideo);
+    setTimeout(() => {
       drawLeftVideo();
-    }, leftVideo.duration * 1000 / MAX_DURATION);
+    }, 100);
   });
   rightVideo.addEventListener("loadeddata", (e) => {
     setTimeout(() => {
