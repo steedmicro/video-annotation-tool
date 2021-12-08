@@ -177,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
   </body>
-  <script>
+<script>
 const MAX_ALPHA = 255,
   BRUSH_THRESHOLD = 20,
   BRUSH_CANVAS_WIDTH = 100,
@@ -232,9 +232,9 @@ function draw() {
   ctx.fill();
 }
 let src, cap, srcArray  = [], dstArray = [], isSrcDone = false;
-function processMat(src) {
+function processMat(src, frameIndex) {
   const rows = src.rows, cols = src.cols, channels = src.channels();
-  let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * leftVideoFrameIndex, k, p, data = src.data;
+  let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * frameIndex, k, p, data = src.data;
   if(processMethod === METHOD_SWAP) {
     for(i = rows - 1; i >= 0; i --) {
       for(j = cols - 1; j >= 0; j --) {
@@ -297,7 +297,7 @@ function drawLeftVideo() {
       let index = 0;
       for(index = 0; index < MAX_DURATION; index ++) {
         src = srcArray[index].clone();
-        processMat(src);
+        processMat(src, index);
         if(dstArray[index] === undefined) {
           dstArray.push(new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4));
         } else {
@@ -314,7 +314,7 @@ function drawLeftVideo() {
   */
   
   if(!isSrcDone) {
-    processMat(src);
+    processMat(src, leftVideoFrameIndex);
   } else {
     src = dstArray[leftVideoFrameIndex].clone();
   }
@@ -476,6 +476,5 @@ $(document).ready(function () {
     leftVideoFrameIndex = 0;
   })
 });
-
-  </script>
+</script>
 </html>
