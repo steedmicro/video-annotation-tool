@@ -231,7 +231,7 @@ function draw() {
   ctx.arc(centerX, centerY, brushRadius, 0, Math.PI * 2, true);
   ctx.fill();
 }
-let cap, srcArray  = [], dstArray = [], isSrcDone = false, isPaused = false;
+let leftCap, srcArray  = [], dstArray = [], isSrcDone = false, isPaused = false;
 function processMat(src, frameIndex) {
   const rows = src.rows, cols = src.cols, channels = src.channels();
   let i, j, r, g, b, d, index, annotationDataIndex = rows * cols * frameIndex, k, p, data = src.data;
@@ -291,7 +291,7 @@ function drawLeftVideo() {
   const ctx = canvas.getContext("2d");
   if(!isSrcDone) {
     src = new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4);
-    cap.read(src);
+    leftCap.read(src);
     srcArray.push(new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4));
     srcArray[leftVideoFrameIndex] = src.clone();
   } else {
@@ -332,8 +332,8 @@ function drawLeftVideo() {
 function drawRightVideo() {
   const canvas = document.getElementById("right_video_canvas");
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(rightVideo, 0, 0);
-  var src = cv.imread("right_video_canvas");
+  src = new cv.Mat(VIDEO_HEIGHT, VIDEO_WIDTH, cv.CV_8UC4);
+  rightCap.read(src);
   cv.cvtColor(src, src, cv.COLOR_RGB2GRAY, 0);
   cv.Canny(src, src, 50, 100, 3, false);
   cv.imshow("right_video_canvas", src);
@@ -376,12 +376,13 @@ $(document).ready(function () {
   $("#slider").attr("max", MAX_DURATION - 1);
   leftVideo.addEventListener("loadeddata", (e) => {
     isPaused = false;
-    cap = new cv.VideoCapture(leftVideo);
+    leftCap = new cv.VideoCapture(leftVideo);
     setTimeout(() => {
       drawLeftVideo();
     }, 100);
   });
   rightVideo.addEventListener("loadeddata", (e) => {
+    rightCap = new cv.VideoCapture(rightVideo);
     setTimeout(() => {
       drawRightVideo();
     }, 100);
