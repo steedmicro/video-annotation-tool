@@ -1,7 +1,7 @@
 <?php header('Access-Control-Allow-Origin: *'); ?>
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $target_dir = "uploads/";
+    $target_dir = "./uploads/";
     $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
     $request_uri = $_SERVER['REQUEST_URI'];
     $request_path = str_replace("index.php", "", $request_uri);
