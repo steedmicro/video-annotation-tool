@@ -205,7 +205,11 @@ let videoAnnotationData = new Uint8ClampedArray(
   leftVideo,
   rightVideo,
   processMethod = METHOD_SWAP;
-
+let leftCap,
+  srcArray = [],
+  dstArray = [],
+  isSrcDone = false,
+  isPaused = false;
 function initVideoAnnotationData() {
   let i;
   const l = videoAnnotationData.length;
@@ -232,11 +236,7 @@ function draw() {
   ctx.arc(centerX, centerY, brushRadius, 0, Math.PI * 2, true);
   ctx.fill();
 }
-let leftCap,
-  srcArray = [],
-  dstArray = [],
-  isSrcDone = false,
-  isPaused = false;
+
 function processMat(src, frameIndex) {
   const rows = src.rows,
     cols = src.cols,
@@ -385,7 +385,7 @@ const deleteArray = (arr) => {
   let i;
   const l = arr.length;
   for (i = 0; i < l; i++) {
-    if (arr[i]) arr[i].delete();
+    arr[i].delete();
   }
 };
 $(document).ready(function () {
@@ -423,6 +423,8 @@ $(document).ready(function () {
     rightVideoFrameIndex = 0;
     isSrcDone = false;
     isPaused = true;
+    deleteArray(srcArray);
+    deleteArray(dstArray);
     srcArray = [];
     dstArray = [];
     $("#slider").val(0);
