@@ -204,9 +204,7 @@ let videoAnnotationData = new Uint8ClampedArray(
   videoSource = "movie_clip.mp4",
   leftVideo,
   rightVideo,
-  processMethod = METHOD_SWAP,
-  isLeftVideoJustLoaded = false,
-  isRightVideoJustLoaded = false;
+  processMethod = METHOD_SWAP;
 
 function initVideoAnnotationData() {
   let i;
@@ -398,23 +396,11 @@ $(document).ready(function () {
   leftVideo.addEventListener("loadeddata", (e) => {
     isPaused = false;
     leftCap = new cv.VideoCapture(leftVideo);
-    isLeftVideoJustLoaded = true;
-  });
-  leftVideo.addEventListener("canplay", (e) => {
-    if(isLeftVideoJustLoaded) {
-      setTimeout(() => { drawLeftVideo(); }, 100);
-      isLeftVideoJustLoaded = false;
-    }
+    setTimeout(() => { drawLeftVideo(); }, 100);
   });
   rightVideo.addEventListener("loadeddata", (e) => {
     rightCap = new cv.VideoCapture(rightVideo);
-    isRightVideoJustLoaded = true;
-  });
-  rightVideo.addEventListener("canplay", (e) => {
-    if(isRightVideoJustLoaded) {
-      setTimeout(() => { drawRightVideo(); }, 100);
-      isRightVideoJustLoaded = false;
-    }
+    setTimeout(() => { drawRightVideo(); }, 100);
   });
   $("#canvas").mousedown(function () {
     isCanvasMousePressed = true;
