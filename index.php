@@ -204,12 +204,14 @@ let videoAnnotationData = new Uint8ClampedArray(
   videoSource = "movie_clip.mp4",
   leftVideo,
   rightVideo,
-  processMethod = METHOD_SWAP;
-let leftCap,
+  processMethod = METHOD_SWAP,
+  leftCap,
+  rightCap,
   srcArray = [],
   dstArray = [],
   isSrcDone = false,
   isPaused = false;
+
 function initVideoAnnotationData() {
   let i;
   const l = videoAnnotationData.length;
@@ -479,7 +481,6 @@ $(document).ready(function () {
         }
       }
     }
-
     draw();
   });
   initVideoAnnotationData();
